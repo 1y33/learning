@@ -51,6 +51,7 @@ class FullResponse(BaseModel):
         return mapping.get(name)
 
 
+## Redis Wrapper funciton 
 class RedisWrapper:
     def __init__(self, redis_config: RedisConfig):
         self.redis_config = redis_config

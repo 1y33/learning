@@ -1,1 +1,36 @@
 venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Cache and build
+.cache/
+.ruff_cache/
+.pytest_cache/
+*.rdb
+.mypy_cache/
+.hypothesis/
+
+# Environment variables
+.env
+.env.local

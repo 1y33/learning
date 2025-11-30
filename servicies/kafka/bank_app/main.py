@@ -5,8 +5,14 @@ import json
 
 from kafka_configs import KafkaConsumerConfig, KafkaProducerConfig
 from api import (
-    TransactionRequest, TransferRequest, WithdrawalRequest, DepositRequest,
-    AccountUpdateRequest, ChangeNameRequest, CreateCardRequest, CloseAccountRequest
+    TransactionRequest,
+    TransferRequest,
+    WithdrawalRequest,
+    DepositRequest,
+    AccountUpdateRequest,
+    ChangeNameRequest,
+    CreateCardRequest,
+    CloseAccountRequest,
 )
 
 
@@ -25,15 +31,15 @@ class BankConsumer:
         msg = self.consumer.poll(timeout=timeout)
         if msg is None or msg.error():
             return None
-        
+
         topic = msg.topic()
         data = json.loads(msg.value().decode("utf-8"))
-        
+
         model = self._parse_message(topic, data)
-        
+
         if topic in self._handlers:
             self._handlers[topic](model)
-        
+
         return model
 
     def _parse_message(self, topic: str, data: dict) -> BaseModel:
@@ -100,19 +106,16 @@ OUTPUT_TOPICS = {
 
 if __name__ == "__main__":
     consumer_config = KafkaConsumerConfig(
-        bootstrap_servers="localhost:9092",
-        group_id="bank-processor"
+        bootstrap_servers="localhost:9092", group_id="bank-processor"
     )
-    producer_config = KafkaProducerConfig(
-        bootstrap_servers="localhost:9092"
-    )
+    producer_config = KafkaProducerConfig(bootstrap_servers="localhost:9092")
 
     consumer = BankConsumer(consumer_config, INPUT_TOPICS)
     producer = BankProducer(producer_config)
 
     def handle_transaction(tx: TransactionRequest):
         print(f"[TX] Received: {tx.transaction_id}")
-        
+
         if isinstance(tx, TransferRequest):
             print(f"Transfer {tx.amount} {tx.currency} -> {tx.to_account}")
         elif isinstance(tx, WithdrawalRequest):
@@ -122,7 +125,7 @@ if __name__ == "__main__":
 
     def handle_account_update(update: AccountUpdateRequest):
         print(f"[ACCOUNT] Received update for: {update.account_id}")
-        
+
         if isinstance(update, ChangeNameRequest):
             print(f"  Name change: {update.old_name} -> {update.new_name}")
         elif isinstance(update, CreateCardRequest):
@@ -140,4 +143,3 @@ if __name__ == "__main__":
     finally:
         consumer.close()
         producer.close()
-    

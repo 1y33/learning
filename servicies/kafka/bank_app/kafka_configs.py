@@ -1,14 +1,18 @@
 from typing import Optional
-from confluent_kafka import Consumer , Producer
+from confluent_kafka import Consumer, Producer
 
-from pydantic import BaseSettings, Field,BaseModel
+from pydantic import BaseSettings, Field, BaseModel
+
 
 class KafkaConfig(BaseSettings):
     bootstrap_servers: str = Field(..., env="KAFKA_BOOTSTRAP_SERVERS")
     client_id: Optional[str] = Field(None, env="KAFKA_CLIENT_ID")
 
     def get_dict(self):
-        return {name.replace("_", "."): value for name, value in self.model_dump().items()}
+        return {
+            name.replace("_", "."): value for name, value in self.model_dump().items()
+        }
+
 
 class KafkaConsumerConfig(KafkaConfig):
     group_id: str = Field(..., env="KAFKA_CONSUMER_GROUP")

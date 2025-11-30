@@ -4,12 +4,16 @@ from pydantic import BaseSettings, Field
 
 #################
 
+
 class KafkaConfig(BaseSettings):
     bootstrap_servers: str = Field(..., env="KAFKA_BOOTSTRAP_SERVERS")
     client_id: Optional[str] = Field(None, env="KAFKA_CLIENT_ID")
 
     def get_dict(self):
-        return {name.replace("_", "."): value for name, value in self.model_dump().items()}
+        return {
+            name.replace("_", "."): value for name, value in self.model_dump().items()
+        }
+
 
 class KafkaConsumerConfig(KafkaConfig):
     group_id: str = Field(..., env="KAFKA_CONSUMER_GROUP")
@@ -29,7 +33,9 @@ class KafkaTopics(BaseSettings):
     consumer_topic: str = Field(..., env="KAFKA_CONSUMER_TOPIC")
     producer_topic: str = Field(..., env="KAFKA_PRODUCER_TOPIC")
 
+
 ###############
+
 
 class KafkaManager:
     def __init__(

@@ -1,4 +1,4 @@
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 from pydantic import Field, BaseModel, field_validator
 from datetime import datetime
 from decimal import Decimal
@@ -6,6 +6,16 @@ from enum import Enum
 import re
 
 ### MAIN ENUMS
+
+
+class MessageType(str, Enum):
+    TRANSACTION_REQUEST = "transaction_request"
+    ACCOUNT_UPDATE_REQUEST = "account_update_request"
+    TRANSACTION_VALIDATED = "transaction_validated"
+    FRAUD_ALERT = "fraud_alert"
+    BALANCE_UPDATE = "balance_update"
+    PROFILE_UPDATE = "profile_update"
+    NOTIFICATION = "notification"
 
 
 class TransactionType(str, Enum):
@@ -53,11 +63,28 @@ class RequestMetadata(BaseModel):
 #### Transaction API
 
 
+class TransferData(BaseModel):
+    to_account: str = Field(..., min_length=5, max_length=34)
+    beneficiary_name: Optional[str] = Field(None, max_length=100)
+
+
+class WithdrawalData(BaseModel):
+    atm_id: Optional[str] = None
+
+
+class DepositData(BaseModel):
+    source: Literal["cash_counter", "check", "wire_transfer"] = "cash_counter"
+
+
 class TransactionRequest(BaseModel):
     transaction_id: str = Field(..., min_length=1)
+    transaction_type: TransactionType
     amount: Decimal = Field(..., gt=0, decimal_places=2)
     currency: Currency = Currency.RON
     metadata: RequestMetadata
+    transfer: Optional[TransferData] = None
+    withdrawal: Optional[WithdrawalData] = None
+    deposit: Optional[DepositData] = None
 
     @field_validator("amount")
     @classmethod
@@ -69,29 +96,10 @@ class TransactionRequest(BaseModel):
         return v
 
 
-class TransferRequest(TransactionRequest):
-    to_account: str = Field(..., min_length=5, max_length=34)
-    beneficiary_name: Optional[str] = Field(None, max_length=100)
-
-
-class WithdrawalRequest(TransactionRequest):
-    atm_id: Optional[str] = None
-
-
-class DepositRequest(TransactionRequest):
-    source: Literal["cash_counter", "check", "wire_transfer"] = "cash_counter"
-
-
 ### Updates Requests
 
 
-class AccountUpdateRequest(BaseModel):
-    account_id: str = Field(..., min_length=5, max_length=34)
-    user_id: str = Field(..., min_length=1)
-    timestamp: datetime = Field(default_factory=datetime.now)
-
-
-class ChangeNameRequest(AccountUpdateRequest):
+class ChangeNameData(BaseModel):
     old_name: str = Field(..., min_length=2, max_length=100)
     new_name: str = Field(..., min_length=2, max_length=100)
 
@@ -103,13 +111,82 @@ class ChangeNameRequest(AccountUpdateRequest):
         return v.strip()
 
 
-class CreateCardRequest(AccountUpdateRequest):
+class CreateCardData(BaseModel):
     card_type: CardType = CardType.DEBIT
     card_name: str = Field(..., max_length=50)
     virtual_card: bool = False
 
 
-class CloseAccountRequest(AccountUpdateRequest):
+class CloseAccountData(BaseModel):
     reason: str = Field(default="user_request", max_length=200)
     final_balance: Decimal = Field(..., ge=0)
     transfer_to_account: Optional[str] = None
+
+
+class AccountUpdateRequest(BaseModel):
+    account_id: str = Field(..., min_length=5, max_length=34)
+    user_id: str = Field(..., min_length=1)
+    update_type: AccountUpdateType
+    timestamp: datetime = Field(default_factory=datetime.now)
+    change_name: Optional[ChangeNameData] = None
+    create_card: Optional[CreateCardData] = None
+    close_account: Optional[CloseAccountData] = None
+
+
+##### RESPONSE API
+
+
+class TransactionValidatedResponse(BaseModel):
+    transaction_id: str
+    status: Literal["approved", "rejected", "pending"]
+    reference_number: str
+    processed_at: datetime = Field(default_factory=datetime.now)
+
+
+class FraudAlertResponse(BaseModel):
+    transaction_id: str
+    risk_score: float = Field(..., ge=0, le=1)
+    risk_level: Literal["low", "medium", "high", "critical"]
+    reasons: list[str]
+    action: Literal["allow", "require_2fa", "block", "review"]
+
+
+class BalanceUpdateResponse(BaseModel):
+    account_id: str
+    old_balance: Decimal
+    new_balance: Decimal
+    currency: Currency
+    transaction_id: str
+
+
+class ProfileUpdateResponse(BaseModel):
+    account_id: str
+    update_type: AccountUpdateType
+    status: Literal["success", "failed", "pending"]
+    details: Optional[str] = None
+
+
+class NotificationResponse(BaseModel):
+    user_id: str
+    channel: Literal["sms", "email", "push"]
+    message: str
+    priority: Literal["low", "normal", "high"] = "normal"
+
+
+##### MESSAGE WRAPPERS
+
+
+class RequestMessage(BaseModel):
+    message_type: MessageType
+    request: Union[TransactionRequest, AccountUpdateRequest]
+
+
+class ResponseMessage(BaseModel):
+    message_type: MessageType
+    response: Union[
+        TransactionValidatedResponse,
+        FraudAlertResponse,
+        BalanceUpdateResponse,
+        ProfileUpdateResponse,
+        NotificationResponse
+    ]

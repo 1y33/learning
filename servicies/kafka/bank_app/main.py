@@ -1,18 +1,22 @@
 from typing import Type, Callable, List
 from confluent_kafka import Consumer, Producer
 from pydantic import BaseModel
+from decimal import Decimal
 import json
+import uuid
 
 from kafka_configs import KafkaConsumerConfig, KafkaProducerConfig
 from api import (
-    TransactionRequest,
-    TransferRequest,
-    WithdrawalRequest,
-    DepositRequest,
-    AccountUpdateRequest,
-    ChangeNameRequest,
-    CreateCardRequest,
-    CloseAccountRequest,
+    MessageType,
+    TransactionRequest, TransactionType,
+    AccountUpdateRequest, AccountUpdateType,
+    RequestMessage, ResponseMessage,
+    TransactionValidatedResponse,
+    FraudAlertResponse,
+    BalanceUpdateResponse,
+    ProfileUpdateResponse,
+    NotificationResponse,
+    Currency,
 )
 
 
@@ -27,7 +31,7 @@ class BankConsumer:
     def register_handler(self, topic: str, handler: Callable[[BaseModel], None]):
         self._handlers[topic] = handler
 
-    def poll(self, timeout: float = 1.0) -> BaseModel | None:
+    def poll(self, timeout: float = 1.0) -> RequestMessage | None:
         msg = self.consumer.poll(timeout=timeout)
         if msg is None or msg.error():
             return None
@@ -35,42 +39,12 @@ class BankConsumer:
         topic = msg.topic()
         data = json.loads(msg.value().decode("utf-8"))
 
-        model = self._parse_message(topic, data)
+        request_msg = RequestMessage.model_validate(data)
 
         if topic in self._handlers:
-            self._handlers[topic](model)
+            self._handlers[topic](request_msg)
 
-        return model
-
-    def _parse_message(self, topic: str, data: dict) -> BaseModel:
-        topic_models = {
-            "transaction_requests": self._parse_transaction,
-            "account_updates": self._parse_account_update,
-        }
-        parser = topic_models.get(topic)
-        if parser:
-            return parser(data)
-        return data
-
-    def _parse_transaction(self, data: dict) -> TransactionRequest:
-        type_map = {
-            "transfer": TransferRequest,
-            "withdrawal": WithdrawalRequest,
-            "deposit": DepositRequest,
-        }
-        tx_type = data.get("transaction_type", "transfer")
-        model_class = type_map.get(tx_type, TransactionRequest)
-        return model_class.model_validate(data)
-
-    def _parse_account_update(self, data: dict) -> AccountUpdateRequest:
-        type_map = {
-            "change_name": ChangeNameRequest,
-            "create_card": CreateCardRequest,
-            "close_account": CloseAccountRequest,
-        }
-        update_type = data.get("update_type", "change_name")
-        model_class = type_map.get(update_type, AccountUpdateRequest)
-        return model_class.model_validate(data)
+        return request_msg
 
     def close(self):
         self.consumer.close()
@@ -81,7 +55,7 @@ class BankProducer:
         self.config = config
         self.producer = Producer(self.config.get_dict())
 
-    def produce(self, topic: str, message: BaseModel):
+    def produce(self, topic: str, message: ResponseMessage):
         payload = message.model_dump_json()
         self.producer.produce(topic, payload.encode("utf-8"))
         self.producer.poll(0)
@@ -113,28 +87,83 @@ if __name__ == "__main__":
     consumer = BankConsumer(consumer_config, INPUT_TOPICS)
     producer = BankProducer(producer_config)
 
-    def handle_transaction(tx: TransactionRequest):
-        print(f"[TX] Received: {tx.transaction_id}")
+    def handle_transaction(msg: RequestMessage):
+        tx = msg.request
+        print(f"[TX] Type: {msg.message_type} | ID: {tx.transaction_id}")
 
-        if isinstance(tx, TransferRequest):
-            print(f"Transfer {tx.amount} {tx.currency} -> {tx.to_account}")
-        elif isinstance(tx, WithdrawalRequest):
-            print(f"Withdrawal {tx.amount} from ATM {tx.atm_id}")
-        elif isinstance(tx, DepositRequest):
-            print(f"Deposit {tx.amount} via {tx.source}")
+        validated = ResponseMessage(
+            message_type=MessageType.TRANSACTION_VALIDATED,
+            response=TransactionValidatedResponse(
+                transaction_id=tx.transaction_id,
+                status="approved",
+                reference_number=f"REF{uuid.uuid4().hex[:8].upper()}"
+            )
+        )
+        producer.produce(OUTPUT_TOPICS["validated"], validated)
 
-    def handle_account_update(update: AccountUpdateRequest):
-        print(f"[ACCOUNT] Received update for: {update.account_id}")
+        fraud_check = ResponseMessage(
+            message_type=MessageType.FRAUD_ALERT,
+            response=FraudAlertResponse(
+                transaction_id=tx.transaction_id,
+                risk_score=0.15,
+                risk_level="low",
+                reasons=["Normal transaction pattern"],
+                action="allow"
+            )
+        )
+        producer.produce(OUTPUT_TOPICS["fraud"], fraud_check)
 
-        if isinstance(update, ChangeNameRequest):
-            print(f"  Name change: {update.old_name} -> {update.new_name}")
-        elif isinstance(update, CreateCardRequest):
-            print(f"  New card: {update.card_type} - {update.card_name}")
-        elif isinstance(update, CloseAccountRequest):
-            print(f"  Close account, reason: {update.reason}")
+        balance = ResponseMessage(
+            message_type=MessageType.BALANCE_UPDATE,
+            response=BalanceUpdateResponse(
+                account_id=tx.metadata.account_id,
+                old_balance=Decimal("10000.00"),
+                new_balance=Decimal("10000.00") - tx.amount,
+                currency=tx.currency,
+                transaction_id=tx.transaction_id
+            )
+        )
+        producer.produce(OUTPUT_TOPICS["balance"], balance)
+
+        notify = ResponseMessage(
+            message_type=MessageType.NOTIFICATION,
+            response=NotificationResponse(
+                user_id=tx.metadata.account_id,
+                channel="sms",
+                message=f"Transfer de {tx.amount} {tx.currency} efectuat cu succes."
+            )
+        )
+        producer.produce(OUTPUT_TOPICS["notify"], notify)
+
+    def handle_account_update(msg: RequestMessage):
+        update = msg.request
+        print(f"[ACCOUNT] Type: {msg.message_type} | ID: {update.account_id}")
+
+        profile = ResponseMessage(
+            message_type=MessageType.PROFILE_UPDATE,
+            response=ProfileUpdateResponse(
+                account_id=update.account_id,
+                update_type=update.update_type,
+                status="success",
+                details="Profile updated successfully"
+            )
+        )
+        producer.produce(OUTPUT_TOPICS["profile"], profile)
+
+        notify = ResponseMessage(
+            message_type=MessageType.NOTIFICATION,
+            response=NotificationResponse(
+                user_id=update.user_id,
+                channel="email",
+                message=f"Contul tau a fost actualizat: {update.update_type}"
+            )
+        )
+        producer.produce(OUTPUT_TOPICS["notify"], notify)
 
     consumer.register_handler("transaction_requests", handle_transaction)
     consumer.register_handler("account_updates", handle_account_update)
+
+    print("Bank processor started. Waiting for messages...")
     try:
         while True:
             consumer.poll(timeout=1.0)

@@ -8,9 +8,12 @@ import uuid
 from kafka_configs import KafkaConsumerConfig, KafkaProducerConfig
 from api import (
     MessageType,
-    TransactionRequest, TransactionType,
-    AccountUpdateRequest, AccountUpdateType,
-    RequestMessage, ResponseMessage,
+    TransactionRequest,
+    TransactionType,
+    AccountUpdateRequest,
+    AccountUpdateType,
+    RequestMessage,
+    ResponseMessage,
     TransactionValidatedResponse,
     FraudAlertResponse,
     BalanceUpdateResponse,
@@ -96,8 +99,8 @@ if __name__ == "__main__":
             response=TransactionValidatedResponse(
                 transaction_id=tx.transaction_id,
                 status="approved",
-                reference_number=f"REF{uuid.uuid4().hex[:8].upper()}"
-            )
+                reference_number=f"REF{uuid.uuid4().hex[:8].upper()}",
+            ),
         )
         producer.produce(OUTPUT_TOPICS["validated"], validated)
 
@@ -108,8 +111,8 @@ if __name__ == "__main__":
                 risk_score=0.15,
                 risk_level="low",
                 reasons=["Normal transaction pattern"],
-                action="allow"
-            )
+                action="allow",
+            ),
         )
         producer.produce(OUTPUT_TOPICS["fraud"], fraud_check)
 
@@ -120,8 +123,8 @@ if __name__ == "__main__":
                 old_balance=Decimal("10000.00"),
                 new_balance=Decimal("10000.00") - tx.amount,
                 currency=tx.currency,
-                transaction_id=tx.transaction_id
-            )
+                transaction_id=tx.transaction_id,
+            ),
         )
         producer.produce(OUTPUT_TOPICS["balance"], balance)
 
@@ -130,8 +133,8 @@ if __name__ == "__main__":
             response=NotificationResponse(
                 user_id=tx.metadata.account_id,
                 channel="sms",
-                message=f"Transfer de {tx.amount} {tx.currency} efectuat cu succes."
-            )
+                message=f"Transfer de {tx.amount} {tx.currency} efectuat cu succes.",
+            ),
         )
         producer.produce(OUTPUT_TOPICS["notify"], notify)
 
@@ -145,8 +148,8 @@ if __name__ == "__main__":
                 account_id=update.account_id,
                 update_type=update.update_type,
                 status="success",
-                details="Profile updated successfully"
-            )
+                details="Profile updated successfully",
+            ),
         )
         producer.produce(OUTPUT_TOPICS["profile"], profile)
 
@@ -155,8 +158,8 @@ if __name__ == "__main__":
             response=NotificationResponse(
                 user_id=update.user_id,
                 channel="email",
-                message=f"Contul tau a fost actualizat: {update.update_type}"
-            )
+                message=f"Contul tau a fost actualizat: {update.update_type}",
+            ),
         )
         producer.produce(OUTPUT_TOPICS["notify"], notify)
 

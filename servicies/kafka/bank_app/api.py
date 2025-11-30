@@ -188,5 +188,5 @@ class ResponseMessage(BaseModel):
         FraudAlertResponse,
         BalanceUpdateResponse,
         ProfileUpdateResponse,
-        NotificationResponse
+        NotificationResponse,
     ]

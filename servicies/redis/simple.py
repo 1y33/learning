@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 import uuid
 
+
 ### Main redis config
 class RedisConfig(BaseModel):
     host: str = "127.0.0.1"
@@ -39,7 +40,7 @@ class FullResponse(BaseModel):
     @classmethod
     def get_component_names(cls) -> List[str]:
         return ["audio", "video", "image"]
-    
+
     @classmethod
     def get_component_class(cls, name: str):
         mapping = {
@@ -54,9 +55,7 @@ class RedisWrapper:
     def __init__(self, redis_config: RedisConfig):
         self.redis_config = redis_config
         self.r = redis.Redis(
-            host=redis_config.host,
-            port=redis_config.port,
-            db=redis_config.db
+            host=redis_config.host, port=redis_config.port, db=redis_config.db
         )
         self.components = FullResponse.get_component_names()
 
@@ -79,7 +78,7 @@ class RedisWrapper:
             return None
 
         data = self.r.hgetall(id)
-        
+
         parsed = {}
         for name in self.components:
             raw = data.get(name.encode())
@@ -93,13 +92,17 @@ class RedisWrapper:
 if __name__ == "__main__":
     config = RedisConfig()
     wrapper = RedisWrapper(config)
-    
+
     request_id = str(uuid.uuid4())
-    
-    wrapper.add_component(request_id, "audio", AudioComponent(wave_domain=44.1, bit_rate=320.0))
+
+    wrapper.add_component(
+        request_id, "audio", AudioComponent(wave_domain=44.1, bit_rate=320.0)
+    )
     wrapper.add_component(request_id, "video", VideoComponent(frames=30))
-    wrapper.add_component(request_id, "image", ImageComponent(width=1920.0, height=1080.0))
-    
+    wrapper.add_component(
+        request_id, "image", ImageComponent(width=1920.0, height=1080.0)
+    )
+
     response = wrapper.get_all(request_id)
     if response:
         print(response.model_dump_json(indent=2))

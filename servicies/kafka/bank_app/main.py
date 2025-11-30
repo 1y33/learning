@@ -96,5 +96,48 @@ OUTPUT_TOPICS = {
     "profile": "account_profile_updates",
     "notify": "notifications",
 }
+
+
+if __name__ == "__main__":
+    consumer_config = KafkaConsumerConfig(
+        bootstrap_servers="localhost:9092",
+        group_id="bank-processor"
+    )
+    producer_config = KafkaProducerConfig(
+        bootstrap_servers="localhost:9092"
+    )
+
+    consumer = BankConsumer(consumer_config, INPUT_TOPICS)
+    producer = BankProducer(producer_config)
+
+    def handle_transaction(tx: TransactionRequest):
+        print(f"[TX] Received: {tx.transaction_id}")
         
+        if isinstance(tx, TransferRequest):
+            print(f"Transfer {tx.amount} {tx.currency} -> {tx.to_account}")
+        elif isinstance(tx, WithdrawalRequest):
+            print(f"Withdrawal {tx.amount} from ATM {tx.atm_id}")
+        elif isinstance(tx, DepositRequest):
+            print(f"Deposit {tx.amount} via {tx.source}")
+
+    def handle_account_update(update: AccountUpdateRequest):
+        print(f"[ACCOUNT] Received update for: {update.account_id}")
         
+        if isinstance(update, ChangeNameRequest):
+            print(f"  Name change: {update.old_name} -> {update.new_name}")
+        elif isinstance(update, CreateCardRequest):
+            print(f"  New card: {update.card_type} - {update.card_name}")
+        elif isinstance(update, CloseAccountRequest):
+            print(f"  Close account, reason: {update.reason}")
+
+    consumer.register_handler("transaction_requests", handle_transaction)
+    consumer.register_handler("account_updates", handle_account_update)
+    try:
+        while True:
+            consumer.poll(timeout=1.0)
+    except KeyboardInterrupt:
+        print("Shutting down...")
+    finally:
+        consumer.close()
+        producer.close()
+    

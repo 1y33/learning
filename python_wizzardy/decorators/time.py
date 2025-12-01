@@ -18,4 +18,4 @@ def slow_function():
     time.sleep(1)
     
 if __name__ =="__main__":
-    slow_function();
+    slow_function()

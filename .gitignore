@@ -18,6 +18,9 @@ ENV/
 # IDE and editor settings
 .vscode/
 .idea/
+
+# C++ build directory
+build/
 *.swp
 *.swo
 *~

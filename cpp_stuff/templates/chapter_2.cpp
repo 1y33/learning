@@ -49,8 +49,19 @@ public:
     }
 };
 
+template <typename... T>
+void print(T... args) {
+    ((std::cout << args << ' '), ...);
+}
+
+
+
 int main()
 {
+    print("\n\n");
+    print(1,3,3,3,3,3,3,"ceva","random");
+    print("\n\n");
+
 
     auto d = add<double>(41.2, 1);
     std::cout << d;

@@ -41,7 +41,7 @@ public:
 
 struct device
 {
-    virtual void output() = 0;
+    virtual void output() =   0;
     virtual ~device() {}
 };
 

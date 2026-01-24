@@ -1,0 +1,60 @@
+2026-01-24 11:11:25,956 INFO supervisord started with pid 22697
+2026-01-24 11:11:26,959 INFO spawned: 'worker_00' with pid 22720
+2026-01-24 11:11:26,962 INFO spawned: 'worker_01' with pid 22721
+2026-01-24 11:11:26,965 WARN exited: worker_00 (exit status 127; not expected)
+2026-01-24 11:11:26,968 WARN exited: worker_01 (exit status 127; not expected)
+2026-01-24 11:11:27,972 INFO spawned: 'worker_00' with pid 22743
+2026-01-24 11:11:27,975 INFO spawned: 'worker_01' with pid 22744
+2026-01-24 11:11:27,980 WARN exited: worker_00 (exit status 127; not expected)
+2026-01-24 11:11:27,983 WARN exited: worker_01 (exit status 127; not expected)
+2026-01-24 11:11:29,988 INFO spawned: 'worker_00' with pid 22789
+2026-01-24 11:11:29,991 INFO spawned: 'worker_01' with pid 22790
+2026-01-24 11:11:29,995 WARN exited: worker_00 (exit status 127; not expected)
+2026-01-24 11:11:29,996 WARN exited: worker_01 (exit status 127; not expected)
+2026-01-24 11:11:33,000 INFO spawned: 'worker_00' with pid 22831
+2026-01-24 11:11:33,002 INFO spawned: 'worker_01' with pid 22832
+2026-01-24 11:11:33,005 WARN exited: worker_00 (exit status 127; not expected)
+2026-01-24 11:11:33,006 INFO gave up: worker_00 entered FATAL state, too many start retries too quickly
+2026-01-24 11:11:33,007 WARN exited: worker_01 (exit status 127; not expected)
+2026-01-24 11:11:34,008 INFO gave up: worker_01 entered FATAL state, too many start retries too quickly
+2026-01-24 11:11:47,022 WARN received SIGINT indicating exit request
+2026-01-24 11:11:57,036 INFO supervisord started with pid 24014
+2026-01-24 11:11:58,040 INFO spawned: 'worker_00' with pid 24045
+2026-01-24 11:11:58,046 INFO spawned: 'worker_01' with pid 24046
+2026-01-24 11:11:58,053 WARN exited: worker_00 (exit status 127; not expected)
+2026-01-24 11:11:58,056 WARN exited: worker_01 (exit status 127; not expected)
+2026-01-24 11:11:59,061 INFO spawned: 'worker_00' with pid 24057
+2026-01-24 11:11:59,065 INFO spawned: 'worker_01' with pid 24058
+2026-01-24 11:11:59,075 WARN exited: worker_00 (exit status 127; not expected)
+2026-01-24 11:11:59,076 WARN exited: worker_01 (exit status 127; not expected)
+2026-01-24 11:12:01,080 INFO spawned: 'worker_00' with pid 24103
+2026-01-24 11:12:01,082 INFO spawned: 'worker_01' with pid 24104
+2026-01-24 11:12:01,085 WARN exited: worker_00 (exit status 127; not expected)
+2026-01-24 11:12:01,085 WARN exited: worker_01 (exit status 127; not expected)
+2026-01-24 11:12:04,089 INFO spawned: 'worker_00' with pid 24168
+2026-01-24 11:12:04,091 INFO spawned: 'worker_01' with pid 24169
+2026-01-24 11:12:04,093 WARN exited: worker_00 (exit status 127; not expected)
+2026-01-24 11:12:04,093 INFO gave up: worker_00 entered FATAL state, too many start retries too quickly
+2026-01-24 11:12:04,093 WARN exited: worker_01 (exit status 127; not expected)
+2026-01-24 11:12:05,094 INFO gave up: worker_01 entered FATAL state, too many start retries too quickly
+2026-01-24 11:12:34,123 WARN received SIGINT indicating exit request
+2026-01-24 11:12:36,545 INFO supervisord started with pid 25392
+2026-01-24 11:12:37,548 INFO spawned: 'worker_00' with pid 25427
+2026-01-24 11:12:37,550 INFO spawned: 'worker_01' with pid 25428
+2026-01-24 11:12:38,566 INFO success: worker_00 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-24 11:12:38,566 INFO success: worker_01 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-24 11:13:33,569 WARN received SIGINT indicating exit request
+2026-01-24 11:13:33,570 INFO waiting for worker_00, worker_01 to die
+2026-01-24 11:13:33,572 WARN stopped: worker_01 (terminated by SIGTERM)
+2026-01-24 11:13:33,572 WARN stopped: worker_00 (terminated by SIGTERM)
+2026-01-24 11:13:40,959 INFO RPC interface 'supervisor' initialized
+2026-01-24 11:13:40,959 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2026-01-24 11:13:40,959 INFO supervisord started with pid 28056
+2026-01-24 11:13:41,962 INFO spawned: 'worker_00' with pid 28190
+2026-01-24 11:13:41,963 INFO spawned: 'worker_01' with pid 28192
+2026-01-24 11:13:42,995 INFO success: worker_00 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-24 11:13:42,995 INFO success: worker_01 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-24 11:16:24,004 WARN received SIGINT indicating exit request
+2026-01-24 11:16:24,005 INFO waiting for worker_00, worker_01 to die
+2026-01-24 11:16:24,006 WARN stopped: worker_01 (terminated by SIGTERM)
+2026-01-24 11:16:24,006 WARN stopped: worker_00 (terminated by SIGTERM)
